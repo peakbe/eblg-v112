@@ -3,25 +3,30 @@
 // Initialisation séquencée, rechargement périodique,
 // gestion d’erreurs centralisée, logs propres.
 // ======================================================
+// =========================
+// APP.JS PRO+
+// =========================
 
-
-// ------------------------------------------------------
-// 1) IMPORTS
-// ------------------------------------------------------
-
-// Carte + sonomètres (initMap initialise déjà les markers)
 import { initMap } from "./map.js";
+import "./helpers.js";
+import "./metar.js";
+import "./taf.js";
+import "./fids.js";
+import "./sonometers.js";
 
-// METAR / TAF / FIDS
-import { loadMetar } from "./metar.js";
-import { loadTaf } from "./taf.js";
-import { loadFids } from "./fids.js";
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("[APP] Initialisation…");
 
-// UI générale
-import { initUI } from "./ui.js";
+    const map = initMap();
 
-// Sonomètres : liste + heatmap toggle
-import { populateSonometerList, initHeatmapToggle } from "./sonometers.js";
+    if (!map) {
+        console.error("[APP ERROR] La carte n'a pas pu être initialisée.");
+        return;
+    }
+
+    console.log("[APP] Carte prête. Modules chargés.");
+});
+
 
 
 // ------------------------------------------------------
