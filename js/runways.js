@@ -71,20 +71,6 @@ export function drawRunway(runway, layer) {
     }).addTo(layer);
 }
 
-export function drawCorridor(runway, layer) {
-    layer.clearLayers();
-
-    const r = RUNWAYS[runway];
-    if (!r) return;
-
-    L.polyline(r.corridor, {
-        color: "#00e5ff",
-        weight: 2,
-        dashArray: "6 6",
-        opacity: 0.7
-    }).addTo(layer);
-}
-
 // ------------------------------------------------------
 // Corridor
 // ------------------------------------------------------
