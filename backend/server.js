@@ -1,11 +1,16 @@
-// backend/server.js
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
 import { SONOMETERS } from "./sonometers-data.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Résolution du chemin absolu vers le frontend
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const FRONTEND = path.join(__dirname, "..");
 
 // =========================
 // CORS PRO+
@@ -17,7 +22,7 @@ app.use(cors({
 }));
 
 // =========================
-// CACHE PRO+ (60 sec)
+// CACHE PRO+
 // =========================
 const cache = {
     metar: { ts: 0, data: null },
@@ -46,30 +51,23 @@ async function safeFetch(url) {
     try {
         console.log("[FETCH] →", url);
         const res = await fetch(url);
-        console.log("[FETCH] STATUS:", res.status);
-
         const text = await res.text();
 
         if (!res.ok) {
             console.error("[FETCH ERROR]", text);
-            return { fallback: true, status: res.status, body: text };
+            return { fallback: true };
         }
 
-        try {
-            return JSON.parse(text);
-        } catch (err) {
-            console.error("[FETCH PARSE ERROR]", err);
-            return { fallback: true, error: "Invalid JSON", raw: text };
-        }
+        return JSON.parse(text);
 
     } catch (err) {
         console.error("[FETCH EXCEPTION]", err);
-        return { fallback: true, error: err.message };
+        return { fallback: true };
     }
 }
 
 // =========================
-// FIDS DYNAMIC GENERATOR
+// FIDS FALLBACK
 // =========================
 function generateDynamicFids() {
     const now = new Date();
@@ -89,32 +87,23 @@ function generateDynamicFids() {
 
     const statuses = ["Departed", "Boarding", "Loading", "Scheduled", "Delayed"];
 
-    return flights.map((f, i) => {
-        const hour = (baseHour + i) % 24;
-        const minute = (10 + i * 7) % 60;
-
-        return {
-            flight: f.flight,
-            destination: f.destination,
-            time: `${pad(hour)}:${pad(minute)}`,
-            status: statuses[i % statuses.length],
-            fallback: true,
-            timestamp: now.toISOString()
-        };
-    });
+    return flights.map((f, i) => ({
+        flight: f.flight,
+        destination: f.destination,
+        time: `${pad((baseHour + i) % 24)}:${pad((10 + i * 7) % 60)}`,
+        status: statuses[i % statuses.length],
+        fallback: true
+    }));
 }
 
 // =========================
-// API ROUTES (AVANT LE FRONTEND)
+// API ROUTES
 // =========================
 
 // METAR
 app.get("/metar", async (req, res) => {
     const cached = getCache("metar");
-    if (cached) {
-        cached.fallback = false;
-        return res.json(cached);
-    }
+    if (cached) return res.json(cached);
 
     const data = await safeFetch(
         `https://api.checkwx.com/metar/EBLG/decoded?x-api-key=${process.env.CHECKWX_KEY}`
@@ -123,11 +112,7 @@ app.get("/metar", async (req, res) => {
     if (data.fallback) {
         const fb = {
             fallback: true,
-            data: [{
-                raw_text: "METAR unavailable",
-                wind: { degrees: 0, speed_kts: 0 }
-            }],
-            timestamp: new Date().toISOString()
+            data: [{ raw_text: "METAR unavailable", wind: { degrees: 0, speed_kts: 0 } }]
         };
         setCache("metar", fb);
         return res.json(fb);
@@ -141,10 +126,7 @@ app.get("/metar", async (req, res) => {
 // TAF
 app.get("/taf", async (req, res) => {
     const cached = getCache("taf");
-    if (cached) {
-        cached.fallback = false;
-        return res.json(cached);
-    }
+    if (cached) return res.json(cached);
 
     const data = await safeFetch(
         `https://api.checkwx.com/taf/EBLG/decoded?x-api-key=${process.env.CHECKWX_KEY}`
@@ -153,10 +135,7 @@ app.get("/taf", async (req, res) => {
     if (data.fallback) {
         const fb = {
             fallback: true,
-            data: [{
-                raw_text: "TAF unavailable"
-            }],
-            timestamp: new Date().toISOString()
+            data: [{ raw_text: "TAF unavailable" }]
         };
         setCache("taf", fb);
         return res.json(fb);
@@ -199,12 +178,9 @@ app.get("/sonos", (req, res) => {
 });
 
 // =========================
-// SERVE STATIC FRONTEND
+// SERVE FRONTEND
 // =========================
-app.use(express.static(".."));      // racine (index.html, css, js, assets)
-app.use(express.static("../assets"));
-app.use(express.static("../css"));
-app.use(express.static("../js"));
+app.use(express.static(FRONTEND));
 
 // =========================
 // START SERVER
