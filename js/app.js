@@ -9,7 +9,7 @@ import { safeLoadFids } from "./fids.js";
 import { loadSonometers, toggleHeatmap } from "./sonometers.js";
 
 import { updateStatusPanel } from "./status.js";
-import { updateLogs } from "./logs.js";
+import { loadLogs } from "./logs.js";
 import { startLiveLogs } from "./logsLive.js";
 
 // ============================
@@ -36,8 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Monitoring
     updateStatusPanel();
-    updateLogs();
-    startLiveLogs();
+    loadLogs();
+    startLiveLogs();;
 });
 
 // ============================
