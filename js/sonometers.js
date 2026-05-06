@@ -1,6 +1,7 @@
 // ======================================================
-// SONOMETERS — VERSION PRO+
-// Chargement robuste, icônes ATC, heatmap, clusters.
+// SONOMETERS — VERSION PRO+ FINALE
+// Chargement robuste, icônes ATC, heatmap, clusters,
+// panneau latéral, fallback intelligent.
 // ======================================================
 
 import { ENDPOINTS } from "./config.js";
@@ -14,9 +15,9 @@ const logErr = (...a) => console.error("[SONO ERROR]", ...a);
 let markersLayer = null;
 let heatLayer = null;
 
-// Icône ATC
+// Icône ATC (compatible GitHub Pages)
 const sonoIcon = L.icon({
-    iconUrl: "/assets/icons/sono-atc.png",
+    iconUrl: "assets/icons/sono-atc.png",   // ✔ Chemin relatif
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     popupAnchor: [0, -16]
@@ -32,10 +33,12 @@ export async function loadSonometers() {
 
     if (!data || !Array.isArray(data)) {
         logErr("Données sonomètres invalides :", data);
+        updateSonometersPanel([]);
         return;
     }
 
     renderSonometers(data);
+    updateSonometersPanel(data);
 }
 
 // ======================================================
@@ -61,7 +64,7 @@ function renderSonometers(list) {
     const heatPoints = [];
 
     list.forEach(sono => {
-        const { lat, lon, status, name, town } = sono;
+        const { lat, lon, status, id, address } = sono;
 
         if (!lat || !lon) return;
 
@@ -69,8 +72,8 @@ function renderSonometers(list) {
         const marker = L.marker([lat, lon], { icon: sonoIcon });
 
         marker.bindPopup(`
-            <b>${name || "Sonomètre"}</b><br>
-            Commune : ${town || "—"}<br>
+            <b>Sonomètre ${id}</b><br>
+            ${address || "Adresse inconnue"}<br>
             Statut : ${status || "—"}
         `);
 
@@ -102,4 +105,31 @@ export function toggleHeatmap(map) {
     } else {
         map.addLayer(heatLayer);
     }
+}
+
+// ======================================================
+// Panneau latéral — Liste des sonomètres
+// ======================================================
+function updateSonometersPanel(list) {
+    const panel = document.getElementById("sono-list");
+    if (!panel) return;
+
+    panel.innerHTML = "";
+
+    if (!list.length) {
+        panel.innerHTML = `<div class="sono-row">Aucun sonomètre disponible</div>`;
+        return;
+    }
+
+    list.forEach(sono => {
+        const row = document.createElement("div");
+        row.className = "sono-row";
+
+        row.innerHTML = `
+            <b>${sono.id}</b> — ${sono.address || "Adresse inconnue"}<br>
+            <small>${sono.lat}, ${sono.lon}</small>
+        `;
+
+        panel.appendChild(row);
+    });
 }
