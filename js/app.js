@@ -18,46 +18,18 @@ import { startLiveLogs } from "./logsLive.js";  // ✔ Harmonisé
 // INITIALISATION UNIQUE
 // ============================
 
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("[APP] Initialisation…");
-
-    const map = initMap();
-    if (!map) {
-        console.error("[APP ERROR] La carte n'a pas pu être initialisée.");
-        return;
-    }
-    window._map = map;
-
-    console.log("[APP] Carte prête. Chargement des modules…");
-
-    // Chargement des modules
+window.addEventListener("DOMContentLoaded", () => {
+    // Chargements initiaux
     safeLoadMetar();
     safeLoadTaf();
     safeLoadFids();
-    loadSonometers();
-
-    // Monitoring
-    checkApiStatus();   // ✔ Remplace updateStatusPanel()
-    loadLogs();         // ✔ Remplace updateLogs()
+    checkApiStatus();
     startLiveLogs();
-});
 
-// ============================
-// SIDEBAR TOGGLE PRO+
-// ============================
-
-const sidebar = document.getElementById("sidebar");
-const toggle = document.getElementById("sidebar-toggle");
-
-toggle.addEventListener("click", () => {
-    sidebar.classList.toggle("collapsed");
-});
-
-// ============================
-// HEATMAP BUTTON
-// ============================
-
-document.getElementById("toggle-heatmap").addEventListener("click", () => {
-    toggleHeatmap(window._map);
+    // Rafraîchissements périodiques
+    setInterval(safeLoadMetar, 60_000);
+    setInterval(safeLoadTaf, 5 * 60_000);
+    setInterval(safeLoadFids, 60_000);
+    setInterval(checkApiStatus, 30_000);
 });
 
