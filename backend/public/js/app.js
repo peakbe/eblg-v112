@@ -64,19 +64,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (defaultTab) defaultTab.click();
 
     // 7) Bouton reset map
-    export function resetMapView() {
-    if (!map) return;
-
-    map.flyTo(
-        [50.645, 5.46],   // centre EBLG
-        12,               // zoom
-        {
-            animate: true,
-            duration: 1.2,     // durée totale
-            easeLinearity: 0.25 // easing smooth
-        }
-    );
-}
+   
 
     // 8) Heatmap ON/OFF
     let noiseHeatmapEnabled = true;
