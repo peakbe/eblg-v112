@@ -235,3 +235,22 @@ body {
     text-align: center;
     pointer-events: none;
 }
+
+/* ===========================
+   BOUTON RESET PRO+++
+   =========================== */
+.reset-pro {
+    background: rgba(0, 40, 60, 0.85);
+    border: 1px solid #00eaff55;
+    color: #00eaff;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: 0.25s ease;
+}
+
+.reset-pro:hover {
+    background: rgba(0, 80, 120, 0.9);
+    border-color: #00eaff;
+    transform: scale(1.05);
+}
