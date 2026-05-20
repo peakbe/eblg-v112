@@ -292,3 +292,83 @@ body {
     color: #888;
     margin-right: 6px;
 }
+/* ======================================================
+   SONO — LISTE & MARKERS PRO+++
+   ====================================================== */
+
+.sono-list-item {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.sono-list-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.sono-list-item.active {
+    background: rgba(0, 150, 255, 0.25);
+}
+
+.sono-line-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+}
+
+.sono-line-sub {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.sono-name {
+    margin-right: 8px;
+}
+
+.sono-db {
+    font-family: monospace;
+}
+
+/* Markers ATC pour sonomètres */
+
+.sono-marker .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid #000;
+    box-shadow: 0 0 4px rgba(0,0,0,0.7);
+}
+
+.sono-marker .dot.active {
+    transform: scale(1.4);
+    box-shadow: 0 0 8px rgba(0, 200, 255, 0.9);
+}
+
+/* Boutons SONO */
+
+#sono-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+#sono-controls select {
+    background: #111;
+    color: #eee;
+    border: 1px solid #333;
+    padding: 2px 4px;
+    font-size: 11px;
+}
+
+/* Liste container */
+
+#sono-list {
+    max-height: 260px;
+    overflow-y: auto;
+    font-size: 12px;
+}
