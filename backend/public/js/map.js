@@ -1,144 +1,122 @@
 // ======================================================
-// MAP.JS — Cockpit IFR PRO+++
-// - Carte Leaflet optimisée
-// - ADS-B live + ghost tracks
-// - Labels + heading arrows
-// - Corridors IFR (approche + départ)
-// - Heatmap bruit
-// - Reset map PRO+++
+// MAP — PRO+++
+// Carte Leaflet, ADS-B, heatmap, zones bruit
 // ======================================================
 
-import { getRunwayCorridors } from "./runways.js";
+import { getRunwayCorridors, getRunwayThresholds } from "./runways.js";
+import { ENDPOINTS } from "./config.js";
+import { fetchJSON } from "./helpers.js";
 
-// ======================================================
-// VARIABLES INTERNES
-// ======================================================
-let map = null;
-let aircraftLayer = null;
-let ghostLayer = null;
-let adsbHeatmap = null;
+const IS_DEV = location.hostname.includes("localhost") || location.hostname.includes("127.0.0.1");
+const log = (...a) => IS_DEV && console.log("[MAP]", ...a);
+const logErr = (...a) => console.error("[MAP ERROR]", ...a);
 
-let lastPositions = new Map(); // ghost tracks
+let map;
+let adsbLayer = null;
+let heatLayer = null;
+let noiseZonesLayer = null;
 
-// ======================================================
-// INIT MAP
-// ======================================================
+window.activeRunway = null;
+window.runwayThresholds = getRunwayThresholds();
+window.runwayCorridors = getRunwayCorridors();
+
+// ------------------------------------------------------
+// API PUBLIC — appelée par app.js
+// ------------------------------------------------------
 export function initMap() {
     map = L.map("map", {
-        zoomControl: false,
-        minZoom: 8,
-        maxZoom: 18,
+        center: [50.643, 5.443],
+        zoom: 12,
         preferCanvas: true
-    }).setView([50.645, 5.46], 12);
+    });
 
-    // Fond de carte
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: "© OSM"
+    window.map = map; // pour sonometers.js
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap"
     }).addTo(map);
 
-    // Couches
-    aircraftLayer = L.layerGroup().addTo(map);
-    ghostLayer = L.layerGroup().addTo(map);
-
-    // Heatmap bruit
-    adsbHeatmap = L.layerGroup();
-
-    window.map = map; // utile pour metar.js
+    adsbLayer = L.layerGroup().addTo(map);
+    log("Map initialisée");
 }
 
-// ======================================================
-// RESET MAP PRO+++
-// ======================================================
 export function resetMapView() {
     if (!map) return;
-
-    map.flyTo(
-        [50.645, 5.46],
-        12,
-        {
-            animate: true,
-            duration: 1.2,
-            easeLinearity: 0.25
-        }
-    );
+    map.setView([50.643, 5.443], 12);
 }
 
-// ======================================================
-// TOGGLE HEATMAP
-// ======================================================
-export function toggleNoiseHeatmap(state) {
-    if (!map || !adsbHeatmap) return;
-
-    if (state) adsbHeatmap.addTo(map);
-    else map.removeLayer(adsbHeatmap);
-}
-
-// ======================================================
-// UPDATE ADS-B
-// ======================================================
-export function updateADSB(aircraftList) {
+export function toggleNoiseHeatmap() {
     if (!map) return;
 
-    aircraftLayer.clearLayers();
+    if (heatLayer) {
+        map.removeLayer(heatLayer);
+        heatLayer = null;
+        return;
+    }
 
-    aircraftList.forEach(ac => {
-        if (!ac.lat || !ac.lon) return;
+    // Exemple simple : heatmap centrée sur la piste
+    const pts = window.runwayCorridors.flatMap(c => c.coords);
+    heatLayer = L.heatLayer(pts, {
+        radius: 40,
+        blur: 25,
+        maxZoom: 17
+    }).addTo(map);
+}
 
-        // Ghost track
-        const key = ac.hex;
-        const prev = lastPositions.get(key);
-        lastPositions.set(key, [ac.lat, ac.lon]);
+export function toggleNoiseZones() {
+    if (!map) return;
 
-        if (prev) {
-            L.polyline([prev, [ac.lat, ac.lon]], {
-                color: "#00eaff55",
-                weight: 2
-            }).addTo(ghostLayer);
+    if (noiseZonesLayer) {
+        map.removeLayer(noiseZonesLayer);
+        noiseZonesLayer = null;
+        return;
+    }
+
+    noiseZonesLayer = L.layerGroup();
+
+    window.runwayCorridors.forEach(c => {
+        const poly = L.polygon(c.coords, {
+            color: "#ff00ff",
+            weight: 1,
+            fillOpacity: 0.15
+        });
+        noiseZonesLayer.addLayer(poly);
+    });
+
+    noiseZonesLayer.addTo(map);
+}
+
+export async function updateADSB() {
+    try {
+        const data = await fetchJSON("/api/adsb");
+        if (!data || !data.ac) {
+            logErr("Données ADSB invalides", data);
+            return;
         }
 
-        // Icon + heading
-        const icon = L.divIcon({
-            className: "ac-icon",
-            html: `
-                <div class="ac-label">${ac.callsign || ac.hex}</div>
-                <div class="ac-arrow" style="transform: rotate(${ac.track || 0}deg)"></div>
-            `
+        renderADSB(data.ac);
+    } catch (err) {
+        logErr("Erreur updateADSB", err);
+    }
+}
+
+// ------------------------------------------------------
+// Rendu ADS-B
+// ------------------------------------------------------
+function renderADSB(acList) {
+    if (!adsbLayer) return;
+    adsbLayer.clearLayers();
+
+    acList.forEach(ac => {
+        const m = L.circleMarker([ac.lat, ac.lon], {
+            radius: 4,
+            color: "#00ffff",
+            weight: 1,
+            fillOpacity: 0.8
         });
 
-        L.marker([ac.lat, ac.lon], { icon }).addTo(aircraftLayer);
+        m.bindTooltip(`${ac.call || "N/A"} (${ac.alt_baro || "?"} ft)`);
+        adsbLayer.addLayer(m);
     });
-}
-
-// ======================================================
-// CORRIDORS IFR
-// ======================================================
-export function drawApproachCorridor(rwy) {
-    if (!map) return;
-
-    const c = getRunwayCorridors(rwy);
-    if (!c) return;
-
-    if (c.approach) {
-        L.polyline(c.approach, {
-            color: "#00ff88",
-            weight: 3,
-            dashArray: "6,4"
-        }).addTo(map);
-    }
-}
-
-export function drawDepartureCorridor(rwy) {
-    if (!map) return;
-
-    const c = getRunwayCorridors(rwy);
-    if (!c) return;
-
-    if (c.departure) {
-        L.polyline(c.departure, {
-            color: "#ffaa00",
-            weight: 3,
-            dashArray: "6,4"
-        }).addTo(map);
-    }
 }
