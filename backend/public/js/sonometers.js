@@ -18,7 +18,7 @@ let sonoMarkersLayer = null;
 // ------------------------------------------------------
 export async function loadSonometers() {
     try {
-        const data = await fetchJSON(ENDPOINTS.sonometers);
+        const data = await fetchJSON(ENDPOINTS.sono);
         if (!data || !data.sensors) {
             logErr("Données sonomètres invalides", data);
             updateStatusPanel("SONO", { error: true });
