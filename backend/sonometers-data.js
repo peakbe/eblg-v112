@@ -1,4 +1,7 @@
-// backend/sonometers-data.js
+// ======================================================
+// SONOMETERS DATA — EBLG PRO+++
+// Source unique pour le backend et le frontend
+// ======================================================
 
 const SONOMETERS = [
     { id: "F017", address: "Rue de la Pommeraie, 4690 Wonck, Belgique", lat: 50.764883, lon: 5.630606 },
@@ -19,4 +22,4 @@ const SONOMETERS = [
     { id: "F006", address: "Rue Bolly Chapon, Seraing", lat: 50.609594, lon: 5.271403 },
     { id: "F012", address: "Rue Barbe d'Or, 4317 Aineffe", lat: 50.621917, lon: 5.254747 }
 ];
-    export default sonometers;
+    export default SONOMETERS;
