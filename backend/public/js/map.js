@@ -1,6 +1,11 @@
 // ======================================================
 // MAP.JS — Cockpit IFR EBLG PRO+++
 // ======================================================
+import { toggleHeatmapState } from "./sonometers.js";
+
+export function toggleNoiseHeatmap(state) {
+    toggleHeatmapState(state);
+}
 
 export let map = null;
 
