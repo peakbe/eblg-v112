@@ -395,16 +395,31 @@ function computeSimulatedDb(sensor, activeRunway, wind, trafficIndex) {
 // ======================================================
 
 // Récupérer le vent réel depuis METAR
-import { getMetar } from "./metar.js";
+async function getBackendMetar() {
+    try {
+        const r = await fetch("https://eblg-dashboard-v84.onrender.com/metar");
+        const data = await r.json();
+
+        return {
+            windDir: data?.wind_direction?.value ?? null,
+            windSpeed: data?.wind_speed?.value ?? null
+        };
+    } catch (err) {
+        console.error("[METAR BACKEND ERROR]", err);
+        return { windDir: null, windSpeed: null };
+    }
+}
 
 app.get("/sonos", async (req, res) => {
-    const metar = await getMetar(); // vent réel
-    const windDir = metar?.wind?.dir ?? 220;
+    const metar = await getBackendMetar();
+
+    const windDir = metar.windDir;
+    const windSpeed = metar.windSpeed;
 
     const ACTIVE_RUNWAY = getActiveRunwayFromWind(windDir);
 
-    const trafficIndex = 8; // tu pourras le brancher sur ADS-B
-    const wind = { dir: windDir, kt: metar?.wind?.speed ?? 5 };
+    const trafficIndex = 8;
+    const wind = { dir: windDir, kt: windSpeed };
 
     const sensors = sonometers.map(s => ({
         ...s,
@@ -413,6 +428,7 @@ app.get("/sonos", async (req, res) => {
 
     res.json({ sensors });
 });
+
 
 
 
