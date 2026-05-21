@@ -1,244 +1,226 @@
 // ======================================================
-// MAP — PRO+++
-// Carte Leaflet, ADS-B, heatmap, zones bruit
+// MAP.JS — Cockpit IFR EBLG PRO+++
+// - Carte Leaflet
+// - Runways + corridor approche
+// - ADS-B markers + heading arrows
+// - Sonomètres (via sonometers.js)
+// - Debug panel FPS / CPU
 // ======================================================
 
-import { getRunwayCorridors, getRunwayThresholds } from "./runways.js";
 import { ENDPOINTS } from "./config.js";
-import { fetchJSON } from "./helpers.js";
-
-const IS_DEV = location.hostname.includes("localhost") || location.hostname.includes("127.0.0.1");
-const log = (...a) => IS_DEV && console.log("[MAP]", ...a);
-const logErr = (...a) => console.error("[MAP ERROR]", ...a);
-
-let map;
-let adsbLayer = null;
-let heatLayer = null;
-let noiseZonesLayer = null;
-
-window.activeRunway = null;
-window.runwayThresholds = getRunwayThresholds();
-window.runwayCorridors = getRunwayCorridors();
 
 // ------------------------------------------------------
-// API PUBLIC — appelée par app.js
+// VARIABLES GLOBALES
+// ------------------------------------------------------
+export let map = null;
+let adsbLayer = null;
+let corridorLayer = null;
+let runwayLayer = null;
+let headingLayer = null;
+
+let lastFrame = performance.now();
+let fpsCounter = 0;
+
+// ------------------------------------------------------
+// INIT MAP
 // ------------------------------------------------------
 export function initMap() {
     map = L.map("map", {
-        center: [50.643, 5.443],
-        zoom: 12,
+        zoomControl: false,
+        minZoom: 8,
+        maxZoom: 18,
         preferCanvas: true
-    });
+    }).setView([50.637, 5.443], 12);
 
-    window.map = map; // pour sonometers.js
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "&copy; OpenStreetMap"
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18
     }).addTo(map);
 
     adsbLayer = L.layerGroup().addTo(map);
-    log("Map initialisée");
-}
-// ======================================================
-// DESSIN CORRIDORS APPROCHE / DÉPART — PRO+++
-// ======================================================
+    corridorLayer = L.layerGroup().addTo(map);
+    runwayLayer = L.layerGroup().addTo(map);
+    headingLayer = L.layerGroup().addTo(map);
 
-let approachLayer = null;
-let departureLayer = null;
-
-export function drawApproachCorridor(rwy) {
-    if (!window.map || !window.runwayCorridors) return;
-
-    // Nettoyage
-    if (approachLayer) {
-        window.map.removeLayer(approachLayer);
-        approachLayer = null;
-    }
-
-    const corridor = window.runwayCorridors.find(c => c.runway === rwy);
-    if (!corridor) return;
-
-    // On ne dessine que la moitié "approche"
-    const coords = corridor.coords.slice(0, 4);
-
-    approachLayer = L.polygon(coords, {
-        color: "#00ffff",
-        weight: 2,
-        fillOpacity: 0.10
-    });
-
-    approachLayer.addTo(window.map);
+    drawRunways();
 }
 
-export function drawDepartureCorridor(rwy) {
-    if (!window.map || !window.runwayCorridors) return;
-
-    // Nettoyage
-    if (departureLayer) {
-        window.map.removeLayer(departureLayer);
-        departureLayer = null;
-    }
-
-    const corridor = window.runwayCorridors.find(c => c.runway === rwy);
-    if (!corridor) return;
-
-    // On ne dessine que la moitié "départ"
-    const coords = corridor.coords.slice(4, 8);
-
-    departureLayer = L.polygon(coords, {
-        color: "#ff00ff",
-        weight: 2,
-        fillOpacity: 0.10
-    });
-
-    departureLayer.addTo(window.map);
-}
-
+// ------------------------------------------------------
+// RESET MAP
+// ------------------------------------------------------
 export function resetMapView() {
-    if (!map) return;
-    map.setView([50.643, 5.443], 12);
-}
-
-export function toggleNoiseHeatmap() {
-    if (!map) return;
-
-    if (heatLayer) {
-        map.removeLayer(heatLayer);
-        heatLayer = null;
-        return;
-    }
-
-    // Exemple simple : heatmap centrée sur la piste
-    const pts = window.runwayCorridors.flatMap(c => c.coords);
-    heatLayer = L.heatLayer(pts, {
-        radius: 40,
-        blur: 25,
-        maxZoom: 17
-    }).addTo(map);
-}
-
-export function toggleNoiseZones() {
-    if (!map) return;
-
-    if (noiseZonesLayer) {
-        map.removeLayer(noiseZonesLayer);
-        noiseZonesLayer = null;
-        return;
-    }
-
-    noiseZonesLayer = L.layerGroup();
-
-    window.runwayCorridors.forEach(c => {
-        const poly = L.polygon(c.coords, {
-            color: "#ff00ff",
-            weight: 1,
-            fillOpacity: 0.15
-        });
-        noiseZonesLayer.addLayer(poly);
-    });
-
-    noiseZonesLayer.addTo(map);
-}
-
-export async function updateADSB() {
-    try {
-        const data = await fetchJSON("/api/adsb");
-        if (!data || !data.ac) {
-            logErr("Données ADSB invalides", data);
-            return;
-        }
-
-        renderADSB(data.ac);
-    } catch (err) {
-        logErr("Erreur updateADSB", err);
-    }
+    map.setView([50.637, 5.443], 12);
 }
 
 // ------------------------------------------------------
-// Rendu ADS-B
+// DEBUG PANEL
 // ------------------------------------------------------
-function renderADSB(acList) {
-    if (!adsbLayer) return;
-    adsbLayer.clearLayers();
-
-    acList.forEach(ac => {
-        const m = L.circleMarker([ac.lat, ac.lon], {
-            radius: 4,
-            color: "#00ffff",
-            weight: 1,
-            fillOpacity: 0.8
-        });
-
-        m.bindTooltip(`${ac.call || "N/A"} (${ac.alt_baro || "?"} ft)`);
-        adsbLayer.addLayer(m);
-    });
-}
-// ======================================================
-// DEBUG PANEL — FPS / CPU / RENDER — PRO+++
-// ======================================================
-
-let fpsEl = null;
-let cpuEl = null;
-let renderEl = null;
-
 export function initDebugPanel() {
-    fpsEl = document.getElementById("fps");
-    cpuEl = document.getElementById("cpu");
-    renderEl = document.getElementById("render");
+    const fpsEl = document.getElementById("fps");
+    const cpuEl = document.getElementById("cpu");
+    const renderEl = document.getElementById("render");
 
-    startFPSCounter();
-    startCPUCounter();
-    hookRenderTime();
-}
+    function loop() {
+        const now = performance.now();
+        const dt = now - lastFrame;
+        lastFrame = now;
 
-// ------------------------------------------------------
-// FPS
-// ------------------------------------------------------
-function startFPSCounter() {
-    let last = performance.now();
-
-    function loop(now) {
-        const delta = now - last;
-        last = now;
-
-        if (fpsEl) fpsEl.textContent = delta.toFixed(1);
+        fpsCounter = 1000 / dt;
+        fpsEl.textContent = fpsCounter.toFixed(1);
+        cpuEl.textContent = dt.toFixed(1);
+        renderEl.textContent = dt.toFixed(1);
 
         requestAnimationFrame(loop);
     }
-
-    requestAnimationFrame(loop);
+    loop();
 }
 
 // ------------------------------------------------------
-// CPU
+// RUNWAYS
 // ------------------------------------------------------
-function startCPUCounter() {
-    let last = performance.now();
+const RWY = {
+    "04": { lat: 50.64594, lon: 5.44321, heading: 40 },
+    "22": { lat: 50.63302, lon: 5.46163, heading: 220 }
+};
 
-    setInterval(() => {
-        const now = performance.now();
-        const cpu = now - last;
-        last = now;
+function drawRunways() {
+    runwayLayer.clearLayers();
 
-        if (cpuEl) cpuEl.textContent = cpu.toFixed(1);
-    }, 200);
+    Object.entries(RWY).forEach(([id, thr]) => {
+        const end = computePoint(thr.lat, thr.lon, thr.heading, 3);
+
+        L.polyline(
+            [
+                [thr.lat, thr.lon],
+                [end.lat, end.lon]
+            ],
+            { color: "white", weight: 4 }
+        ).addTo(runwayLayer);
+
+        L.marker([thr.lat, thr.lon], {
+            icon: L.divIcon({
+                className: "rwy-label",
+                html: `<div class="rwy">${id}</div>`
+            })
+        }).addTo(runwayLayer);
+    });
 }
 
 // ------------------------------------------------------
-// Render time Leaflet
+// CORRIDOR APPROCHE
 // ------------------------------------------------------
-function hookRenderTime() {
-    if (!window.map) return;
+export function drawCorridor(points) {
+    corridorLayer.clearLayers();
+    if (!points) return;
 
-    let t0 = 0;
+    L.polygon(points, {
+        color: "cyan",
+        weight: 2,
+        fillOpacity: 0.15
+    }).addTo(corridorLayer);
+}
 
-    window.map.on("movestart", () => {
-        t0 = performance.now();
+// ------------------------------------------------------
+// ADS-B UPDATE
+// ------------------------------------------------------
+export function updateADSB(list) {
+    adsbLayer.clearLayers();
+    headingLayer.clearLayers();
+    corridorLayer.clearLayers();
+
+    if (!Array.isArray(list) || !list.length) return;
+
+    list.forEach(ac => {
+        if (!ac.lat || !ac.lon) return;
+
+        // Marker avion
+        const icon = L.divIcon({
+            className: "adsb-marker",
+            html: `
+                <div class="plane" style="transform: rotate(${ac.track || 0}deg)"></div>
+                <div class="label">${ac.call || ""}</div>
+            `,
+            iconSize: [30, 30]
+        });
+
+        L.marker([ac.lat, ac.lon], { icon }).addTo(adsbLayer);
+
+        // Heading arrow
+        drawHeadingArrow(ac);
+
+        // Corridor approche
+        if (ac.corridor) drawCorridor(ac.corridor);
     });
+}
 
-    window.map.on("moveend", () => {
-        const dt = performance.now() - t0;
-        if (renderEl) renderEl.textContent = dt.toFixed(1);
-    });
+// ------------------------------------------------------
+// HEADING ARROW
+// ------------------------------------------------------
+function drawHeadingArrow(ac) {
+    if (!ac.track) return;
+
+    const start = { lat: ac.lat, lon: ac.lon };
+    const end = computePoint(ac.lat, ac.lon, ac.track, 1.5);
+
+    const line = L.polyline(
+        [
+            [start.lat, start.lon],
+            [end.lat, end.lon]
+        ],
+        { color: "yellow", weight: 2 }
+    ).addTo(headingLayer);
+
+    L.polylineDecorator(line, {
+        patterns: [
+            {
+                offset: "100%",
+                repeat: 0,
+                symbol: L.Symbol.arrowHead({
+                    pixelSize: 10,
+                    polygon: false,
+                    pathOptions: { stroke: true, color: "yellow" }
+                })
+            }
+        ]
+    }).addTo(headingLayer);
+}
+
+// ------------------------------------------------------
+// UTILS
+// ------------------------------------------------------
+function computePoint(lat, lon, brg, distKm) {
+    const R = 6371;
+    const d = distKm / R;
+    const br = (brg * Math.PI) / 180;
+
+    const lat1 = (lat * Math.PI) / 180;
+    const lon1 = (lon * Math.PI) / 180;
+
+    const lat2 =
+        Math.asin(
+            Math.sin(lat1) * Math.cos(d) +
+                Math.cos(lat1) * Math.sin(d) * Math.cos(br)
+        );
+
+    const lon2 =
+        lon1 +
+        Math.atan2(
+            Math.sin(br) * Math.sin(d) * Math.cos(lat1),
+            Math.cos(d) - Math.sin(lat1) * Math.sin(lat2)
+        );
+
+    return {
+        lat: (lat2 * 180) / Math.PI,
+        lon: (lon2 * 180) / Math.PI
+    };
+}
+
+// ------------------------------------------------------
+// NOISE MAP (depuis app.js)
+// ------------------------------------------------------
+export function toggleNoiseHeatmap(state) {
+    console.log("[HEATMAP] toggle", state);
+}
+
+export function toggleNoiseZones() {
+    console.log("[ZONES BRUIT] toggle");
 }
