@@ -1,32 +1,82 @@
 // ======================================================
-// HELPERS — VERSION PRO+
-// fetch JSON, status panel, distance, utils
+// HELPERS.JS — Cockpit IFR EBLG PRO+++
+// - fetchJSON blindé (anti-HTML, anti-JSON invalide)
+// - timeout intégré
+// - updateStatusPanel harmonisé
 // ======================================================
 
-const IS_DEV = location.hostname.includes("localhost") || location.hostname.includes("127.0.0.1");
-const log = (...a) => IS_DEV && console.log("[HELPERS]", ...a);
-const logErr = (...a) => console.error("[HELPERS ERROR]", ...a);
+// ------------------------------------------------------
+// FETCH JSON ROBUSTE — ANTI-HTML — TIMEOUT — PRO+++
+// ------------------------------------------------------
+export async function fetchJSON(url, timeoutMs = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-export async function fetchJSON(url) {
     try {
-        log("GET", url);
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(res.status);
-        return await res.json();
+        const r = await fetch(url, { signal: controller.signal });
+
+        if (!r.ok) {
+            console.warn("[fetchJSON] HTTP", r.status, url);
+            return null;
+        }
+
+        const text = await r.text();
+
+        // 🔥 Anti-HTML : si la réponse commence par "<", on ignore
+        if (text.trim().startsWith("<")) {
+            console.warn("[fetchJSON] Réponse HTML ignorée", url);
+            return null;
+        }
+
+        // Tentative de parse JSON
+        try {
+            return JSON.parse(text);
+        } catch (err) {
+            console.warn("[fetchJSON] JSON invalide", url);
+            return null;
+        }
+
     } catch (err) {
-        logErr("fetchJSON", url, err);
+        if (err.name === "AbortError") {
+            console.warn("[fetchJSON] Timeout", url);
+        } else {
+            console.error("[fetchJSON] Erreur", err);
+        }
         return null;
+
+    } finally {
+        clearTimeout(timer);
     }
 }
 
-// Status panel générique (clé → data)
-export function updateStatusPanel(key, data) {
-    const el = document.getElementById("status-panel");
+// ------------------------------------------------------
+// UPDATE STATUS PANEL — PRO+++
+// ------------------------------------------------------
+export function updateStatusPanel(key, state) {
+    const el = document.querySelector(`[data-status="${key}"]`);
     if (!el) return;
 
-    const ok = data && !data.fallback;
-    const row = el.querySelector(`[data-key="${key}"]`);
-    if (!row) return;
+    el.classList.remove("ok", "error");
 
-    row.className = "status-row " + (ok ? "ok" : "warn");
+    if (state.ok) el.classList.add("ok");
+    if (state.error) el.classList.add("error");
+}
+
+// ------------------------------------------------------
+// HAVERSINE — DISTANCE (mètres)
+// ------------------------------------------------------
+export function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const toRad = x => (x * Math.PI) / 180;
+
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) ** 2;
+
+    return 2 * R * Math.asin(Math.sqrt(a));
 }
