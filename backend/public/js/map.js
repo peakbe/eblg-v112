@@ -228,8 +228,11 @@ function computePoint(lat, lon, brg, distKm) {
 // ------------------------------------------------------
 // NOISE MAP (depuis app.js)
 // ------------------------------------------------------
+import { updateNoiseHeatmap } from "./sonometers.js";
+
 export function toggleNoiseHeatmap(state) {
-    console.log("[HEATMAP] toggle", state);
+    heatmapEnabled = state;
+    updateNoiseHeatmap(sonoDataRaw || []);
 }
 
 export function toggleNoiseZones() {
