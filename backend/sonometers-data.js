@@ -19,3 +19,4 @@ export const SONOMETERS = [
     { id: "F006", address: "Rue Bolly Chapon, Seraing", lat: 50.609594, lon: 5.271403 },
     { id: "F012", address: "Rue Barbe d'Or, 4317 Aineffe", lat: 50.621917, lon: 5.254747 }
 ];
+    export default sonometers;
