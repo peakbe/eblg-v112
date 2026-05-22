@@ -236,13 +236,7 @@ function computePoint(lat, lon, brg, distKm) {
 // ZONES DE BRUIT DYNAMIQUES — Cockpit IFR PRO+++
 // ======================================================
 
-let noiseZonesLayer = null;
 
-export function initNoiseZones() {
-    if (!noiseZonesLayer) {
-        noiseZonesLayer = L.layerGroup().addTo(map);
-    }
-}
 
 export function drawDynamicNoiseZones(activeRunway) {
     if (!noiseZonesLayer) return;
@@ -301,6 +295,16 @@ function makeNoisePolygon(thr, heading, distKm, widthKm) {
     ];
 }
 
+// ======================================================
+// INIT ZONES DE BRUIT
+// ======================================================
+let noiseZonesLayer = null;
+
+export function initNoiseZones() {
+    if (!noiseZonesLayer) {
+        noiseZonesLayer = L.layerGroup().addTo(map);
+    }
+}
 
 // ------------------------------------------------------
 // ZONES BRUIT
