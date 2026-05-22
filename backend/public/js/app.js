@@ -13,12 +13,17 @@ import { initMetar, safeLoadMetar } from "./metar.js";
 import { initTaf, safeLoadTaf } from "./taf.js";
 import { safeLoadFids } from "./fids.js";
 import { loadSonometers } from "./sonometers.js";
-window.addEventListener("map-ready", () => {
-    loadSonometers();
-});
 import { checkApiStatus } from "./status.js";
 import { loadLogs } from "./logs.js";
 import { startLiveLogs } from "./logsLive.js";
+
+// ------------------------------------------------------
+// CHARGEMENT DES SONOMÈTRES UNIQUEMENT QUAND LA CARTE EST PRÊTE
+// ------------------------------------------------------
+window.addEventListener("map-ready", () => {
+    console.log("[MAP] Carte prête → chargement sonomètres");
+    loadSonometers();
+});
 
 // ------------------------------------------------------
 // INIT GLOBAL
@@ -30,11 +35,10 @@ window.addEventListener("DOMContentLoaded", () => {
     initMap();
     initDebugPanel();
 
-    // Modules dépendants de la carte → léger délai pour laisser Leaflet finir
+    // Modules dépendants de la carte (mais PAS les sonomètres)
     setTimeout(() => {
         console.log("[MAP] Init terminée — chargement modules dépendants…");
         safeLoadFids();
-        loadSonometers();
         loadLogs();
         startLiveLogs();
     }, 300);
@@ -60,7 +64,7 @@ function setupTimers() {
     setInterval(safeLoadMetar, 60_000);
     setInterval(safeLoadTaf, 10 * 60_000);
     setInterval(safeLoadFids, 60_000);
-    setInterval(loadSonometers, 30_000);
+    setInterval(loadSonometers, 30_000); // OK car map-ready a déjà eu lieu
     setInterval(checkApiStatus, 60_000);
     setInterval(loadLogs, 120_000);
 }
