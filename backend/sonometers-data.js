@@ -5,7 +5,7 @@
 
 const SONOMETERS = [
     
-{id: F001,
+{id: "F001",
 name: "F001",
 lat: 50.738044,
 lon: 5.608833,
