@@ -196,6 +196,45 @@ function renderSonoDebugAdvanced(sensors) {
     sonoDebugLayer.addTo(window._map);
 }
 
+// Code PRO+++ pour générer l’histogramme
+let dbHistogram = null;
+
+function renderDbHistogram(sensors) {
+    const ctx = document.getElementById("db-histogram");
+    if (!ctx) return;
+
+    const values = sensors.map(s => s.db);
+
+    const bins = [30,35,40,45,50,55,60,65,70,75,80,85];
+    const counts = bins.map((b, i) => {
+        const min = b;
+        const max = bins[i+1] || 200;
+        return values.filter(v => v >= min && v < max).length;
+    });
+
+    if (dbHistogram) dbHistogram.destroy();
+
+    dbHistogram = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: bins.map(b => `${b} dB`),
+            datasets: [{
+                label: "Nombre de sonomètres",
+                data: counts,
+                backgroundColor: "rgba(0,150,255,0.6)",
+                borderColor: "#0af",
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
 // ======================================================
 // RENDU DES SONOMÈTRES — Cockpit IFR PRO+++
 // ======================================================
@@ -289,6 +328,8 @@ renderSonometers(json.sensors);
 renderHeatmap(json.sensors);
 renderHeatmapDebug(json.sensors);
 updateDbPanel(json);
+renderDbHistogram(json.sensors);
+
 
 
     } catch (err) {
