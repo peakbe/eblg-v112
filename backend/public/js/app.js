@@ -6,7 +6,8 @@ import {
     initMap,
     resetMapView,
     toggleNoiseZones,
-    initDebugPanel
+    initDebugPanel,
+    initNoiseZones
 } from "./map.js";
 
 import { initMetar, safeLoadMetar } from "./metar.js";
@@ -20,7 +21,12 @@ import { startLiveLogs } from "./logsLive.js";
 // ------------------------------------------------------
 // CHARGEMENT DES SONOMÈTRES UNIQUEMENT QUAND LA CARTE EST PRÊTE
 // ------------------------------------------------------
-window.addEventListener("map-ready", () => loadSonometers());
+setTimeout(() => {
+    window._map = map;
+    map.invalidateSize();   // ← indispensable
+    window.dispatchEvent(new Event("map-ready"));
+}, 0);
+
 
 // ------------------------------------------------------
 // INIT GLOBAL
