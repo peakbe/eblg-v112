@@ -238,8 +238,6 @@ function computePoint(lat, lon, brg, distKm) {
 // ZONES DE BRUIT DYNAMIQUES — Cockpit IFR PRO+++
 // ======================================================
 
-
-
 export function drawDynamicNoiseZones(activeRunway) {
     if (!noiseZonesLayer) return;
 
@@ -295,6 +293,42 @@ function makeNoisePolygon(thr, heading, distKm, widthKm) {
         [farRight.lat, farRight.lon],
         [farLeft.lat, farLeft.lon]
     ];
+}
+
+// Définition des corridors (PRO+++)
+const ACOUSTIC_CORRIDORS = {
+    "22": [
+        [50.65, 5.45],
+        [50.63, 5.47],
+        [50.60, 5.45],
+        [50.62, 5.43]
+    ],
+    "04": [
+        [50.65, 5.43],
+        [50.63, 5.41],
+        [50.60, 5.43],
+        [50.62, 5.45]
+    ]
+};
+let acousticCorridorLayer = null;
+
+export function drawAcousticCorridor(runway) {
+    if (!window._map) return;
+
+    if (acousticCorridorLayer) {
+        window._map.removeLayer(acousticCorridorLayer);
+    }
+
+    const coords = ACOUSTIC_CORRIDORS[runway];
+    if (!coords) return;
+
+    acousticCorridorLayer = L.polygon(coords, {
+        color: runway === "22" ? "red" : "green",
+        weight: 2,
+        fillOpacity: 0.15
+    });
+
+    acousticCorridorLayer.addTo(window._map);
 }
 
 // ======================================================
