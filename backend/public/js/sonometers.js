@@ -1,6 +1,16 @@
 // ======================================================
 // SONOMETERS.JS — Cockpit IFR EBLG PRO+++
 // ======================================================
+const RUNWAY_COLOR_MAP = {
+    "22": {
+        green: ["F002","F003","F004","F005","F006","F007","F008","F009","F010","F011","F012","F013","F016"],
+        red:   ["F001","F014","F015","F017"]
+    },
+    "04": {
+        green: ["F002","F003","F007","F008","F009","F011","F013","F014","F015"],
+        red:   ["F004","F005","F006","F010","F012","F016","F001","F017"]
+    }
+};
 
 import { map } from "./map.js";
 
@@ -12,6 +22,17 @@ let noiseHeatmapLayer = null;
 
 export let sonoDataRaw = [];
 export let heatmapEnabled = false;
+
+// Fonction PRO+++ pour déterminer la couleur d’un sonomètre
+function getSonoColor(id, activeRunway) {
+    const map = RUNWAY_COLOR_MAP[activeRunway];
+    if (!map) return "gray";
+
+    if (map.green.includes(id)) return "green";
+    if (map.red.includes(id)) return "red";
+
+    return "gray";
+}
 
 // ------------------------------------------------------
 // LOAD SONOMETERS
@@ -44,6 +65,16 @@ function renderSonometers(list) {
     if (!map) return;
 
     sonoMarkersLayer.clearLayers();
+    
+const color = getSonoColor(sensor.name, ACTIVE_RUNWAY);
+
+const marker = L.circleMarker([sensor.lat, sensor.lon], {
+    radius: 8,
+    color: color,
+    fillColor: color,
+    fillOpacity: 0.9,
+    weight: 2
+});
 
     list.forEach(s => {
         // Vérification stricte
