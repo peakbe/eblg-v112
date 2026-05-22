@@ -102,16 +102,21 @@ function renderSection(title, flights) {
 function renderFlight(f) {
     const statusClass = getStatusClass(f.status);
     const time = f.estimated || f.scheduled || "--:--";
+    const logo = getAirlineLogo(f);
 
     return `
         <div class="fids-row ${statusClass}">
             <div class="fids-col time">${time}</div>
-            <div class="fids-col flight">${f.flight || ""}</div>
+            <div class="fids-col flight">
+                ${logo ? `<img class="fids-logo" src="${logo}" />` : ""}
+                ${f.flight || ""}
+            </div>
             <div class="fids-col city">${f.city || ""}</div>
             <div class="fids-col status">${f.status || ""}</div>
         </div>
     `;
 }
+
 
 // ------------------------------------------------------
 // COULEURS ATC
@@ -132,7 +137,7 @@ function getStatusClass(s) {
 }
 
 // ------------------------------------------------------
-// affichage logo
+// utilitaire pour trouver le bon logo
 // ------------------------------------------------------
 function getAirlineLogo(flight) {
     if (!flight || !flight.airline) return null;
