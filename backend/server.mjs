@@ -286,12 +286,7 @@ app.get("/fids", async (req, res) => {
 
     } catch (err) {
         console.error("[FIDS] Erreur API officielle", err);
-
-        // fallback minimal
-        res.json({
-            arrivals: [],
-            departures: []
-        });
+        res.json({ arrivals: [], departures: [] });
     }
 });
 
