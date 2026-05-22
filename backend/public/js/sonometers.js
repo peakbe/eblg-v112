@@ -164,6 +164,7 @@ export async function loadSonometers() {
     try {
         const r = await fetch("/sonos");
         const json = await r.json();
+window._lastSonoData = json.sensors;
 
         // Piste active envoyée par backend
        window.ACTIVE_RUNWAY = json.runway;
