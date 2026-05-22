@@ -21,12 +21,7 @@ import { startLiveLogs } from "./logsLive.js";
 // ------------------------------------------------------
 // CHARGEMENT DES SONOMÈTRES UNIQUEMENT QUAND LA CARTE EST PRÊTE
 // ------------------------------------------------------
-setTimeout(() => {
-    window._map = map;
-    map.invalidateSize();   // ← indispensable
-    window.dispatchEvent(new Event("map-ready"));
-}, 0);
-
+window.addEventListener("map-ready", () => loadSonometers());
 
 // ------------------------------------------------------
 // INIT GLOBAL
