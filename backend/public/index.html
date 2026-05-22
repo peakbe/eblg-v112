@@ -12,6 +12,7 @@
     />
     <link rel="stylesheet" href="/css/style.css" />
 </head>
+    
 <body>
     <!-- SIDEBAR -->
     <div id="sidebar">
@@ -114,5 +115,23 @@
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
     <script type="module" src="/js/app.js?v=84"></script>
+
+    <div id="db-panel" class="db-panel hidden">
+    <div class="db-header">
+        <span>Niveaux sonores (dB)</span>
+        <span id="db-close">✕</span>
+    </div>
+
+    <div class="db-meta">
+        <div>Piste active : <strong id="db-runway"></strong></div>
+        <div>Vent : <strong id="db-wind"></strong></div>
+        <div>Trafic : <strong id="db-traffic"></strong></div>
+    </div>
+
+    <div id="db-list" class="db-list"></div>
+</div>
+
+<button id="db-toggle" class="db-toggle">dB</button>
+
 </body>
 </html>
