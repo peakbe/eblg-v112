@@ -232,3 +232,10 @@ function computePoint(lat, lon, brg, distKm) {
         lon: (lon2 * 180) / Math.PI
     };
 }
+
+// ------------------------------------------------------
+// ZONES BRUIT
+// ------------------------------------------------------
+export function toggleNoiseZones() {
+    console.log("[ZONES BRUIT] toggle");
+}
