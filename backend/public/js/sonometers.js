@@ -5,7 +5,8 @@
 // - Heatmap + markers
 // - Panneau dB réel
 // ======================================================
-import { drawDynamicNoiseZones } from "./map.js";
+
+import { drawDynamicNoiseZones, drawAcousticCorridor } from "./map.js";
 
 window.SONO_DEBUG = true; // mettre false pour désactiver
 let debugLayer = null;
