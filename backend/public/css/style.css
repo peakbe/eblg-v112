@@ -131,3 +131,69 @@ body {
     z-index: 1;
     background: #02040a;
 }
+.db-panel {
+    position: fixed;
+    right: 20px;
+    top: 80px;
+    width: 260px;
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    border: 1px solid #0ff;
+    border-radius: 6px;
+    padding: 10px;
+    z-index: 9999;
+    font-family: monospace;
+}
+
+.db-panel.hidden {
+    display: none;
+}
+
+.db-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #0ff;
+    padding-bottom: 4px;
+}
+
+.db-meta {
+    font-size: 13px;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.db-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.db-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,255,255,0.2);
+}
+
+.db-item-name {
+    color: #0ff;
+}
+
+.db-item-value {
+    font-weight: bold;
+}
+
+.db-toggle {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    background: #0ff;
+    color: #000;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 9999;
+}
