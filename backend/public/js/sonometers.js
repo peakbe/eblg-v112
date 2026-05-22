@@ -6,6 +6,8 @@
 // - Panneau dB réel
 // ======================================================
 import { drawDynamicNoiseZones } from "./map.js";
+window.SONO_DEBUG = true; // mettre false pour désactiver
+let debugLayer = null;
 
 // ------------------------------------------------------
 // 1) TABLE COULEURS SELON PISTE ACTIVE
@@ -99,9 +101,37 @@ export function toggleNoiseHeatmap(enabled) {
     }
 }
 
+// ======================================================
+// FONCTION PRO+++ pour afficher les labels
+// ======================================================
+function renderSonoDebugLabels(sensors) {
+    if (!window._map) return;
 
+    // Supprime ancienne couche debug
+    if (debugLayer) {
+        window._map.removeLayer(debugLayer);
+    }
 
+    debugLayer = L.layerGroup();
 
+    sensors.forEach(s => {
+        const id = String(s.name).trim().toUpperCase();
+
+        const label = L.marker([s.lat, s.lon], {
+            icon: L.divIcon({
+                className: "sono-debug-label",
+                html: id,
+                iconSize: [30, 12],
+                iconAnchor: [15, -10] // au-dessus du marker
+            }),
+            interactive: false
+        });
+
+        debugLayer.addLayer(label);
+    });
+
+    debugLayer.addTo(window._map);
+}
 
 // ======================================================
 // RENDU DES SONOMÈTRES — Cockpit IFR PRO+++
