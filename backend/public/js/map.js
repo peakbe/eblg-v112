@@ -301,14 +301,6 @@ function makeNoisePolygon(thr, heading, distKm, widthKm) {
     ];
 }
 
-// ======================================================
-// INIT ZONES DE BRUIT
-// ======================================================
-export function initNoiseZones() {
-    if (!noiseZonesLayer) {
-        noiseZonesLayer = L.layerGroup().addTo(map);
-    }
-}
 
 // ------------------------------------------------------
 // ZONES BRUIT
