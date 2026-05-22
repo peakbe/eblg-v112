@@ -156,3 +156,30 @@ function getAirlineLogo(flight) {
 
     return null;
 }
+
+// ------------------------------------------------------
+// Logique JS pour afficher Arrivées / Départs
+// ------------------------------------------------------
+export function initFidsTabs() {
+    const tabs = document.querySelectorAll("[data-fids]");
+    const arr = document.getElementById("fids-arrivals");
+    const dep = document.getElementById("fids-departures");
+
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            tabs.forEach(t => t.classList.remove("active"));
+            tab.classList.add("active");
+
+            const mode = tab.getAttribute("data-fids");
+
+            if (mode === "arrivals") {
+                arr.style.display = "block";
+                dep.style.display = "none";
+            } else {
+                arr.style.display = "none";
+                dep.style.display = "block";
+            }
+        });
+    });
+}
+
