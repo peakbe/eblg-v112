@@ -31,7 +31,11 @@ window.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
         console.log("[MAP] Init terminée — chargement modules dépendants…");
         safeLoadFids();
-        loadSonometers();      // markers + heatmap
+        
+        window.addEventListener("map-ready", () => {
+    loadSonometers();
+});
+
         loadLogs();
         startLiveLogs();
     }, 300);
