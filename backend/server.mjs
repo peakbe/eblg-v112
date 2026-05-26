@@ -39,7 +39,7 @@ app.use(express.static(publicDir));
 // ======================================================
 // CONSTANTES EBLG / PISTES
 // ======================================================
-const EBLG = { lat: 50.637, lon: 5.443 };
+import { EBLG } from "./constants.js";
 
 const RWY = {
     "04": { lat: 50.64594, lon: 5.44321, heading: 40 },
