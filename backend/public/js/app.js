@@ -73,6 +73,7 @@ function setupTimers() {
 });
     setInterval(checkApiStatus, 60_000);
     setInterval(loadLogs, 120_000);
+    setInterval(loadRadar, 2000); // toutes les 2 s
 }
 
 // ------------------------------------------------------
