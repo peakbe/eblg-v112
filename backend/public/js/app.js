@@ -18,6 +18,8 @@ import { loadSonometers } from "./sonometers.js";
 import { checkApiStatus } from "./status.js";
 import { loadLogs } from "./logs.js";
 import { startLiveLogs } from "./logsLive.js";
+import { loadRadar } from "./radar.js";
+setInterval(loadRadar, 2000); // toutes les 2 secondes
 
 // ------------------------------------------------------
 // CHARGEMENT DES SONOMÈTRES UNIQUEMENT QUAND LA CARTE EST PRÊTE
