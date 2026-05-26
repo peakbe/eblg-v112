@@ -105,3 +105,92 @@ export async function getRadarFlights() {
         return { flights: [], error: true };
     }
 }
+
+let radarLayer = null;
+const radarMarkers = new Map(); // icao24 -> marker
+
+// ------------------------------------------------------
+// Couleur selon altitude (ft)
+// ------------------------------------------------------
+function getAltitudeColor(alt) {
+    if (!alt || alt < 500) return "#ff4444";      // rouge = très bas
+    if (alt < 3000) return "#ffaa00";             // orange = approche
+    if (alt < 10000) return "#00ccff";            // cyan = moyenne altitude
+    return "#00ff99";                             // vert = haut
+}
+
+// ------------------------------------------------------
+// Icône avion orientée
+// ------------------------------------------------------
+function makePlaneIcon(heading, alt) {
+    const color = getAltitudeColor(alt);
+
+    return L.divIcon({
+        className: "radar-plane",
+        html: `
+            <div class="plane-icon" 
+                 style="transform: rotate(${heading}deg); color:${color}">
+                ✈
+            </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+    });
+}
+
+// ------------------------------------------------------
+// Mise à jour des avions
+// ------------------------------------------------------
+export function renderRadar(flights) {
+    if (!window._map) return;
+
+    if (!radarLayer) {
+        radarLayer = L.layerGroup().addTo(window._map);
+    }
+
+    const seen = new Set();
+
+    flights.forEach(f => {
+        seen.add(f.icao24);
+
+        let marker = radarMarkers.get(f.icao24);
+
+        if (!marker) {
+            marker = L.marker([f.lat, f.lon], {
+                icon: makePlaneIcon(f.heading, f.baroAltitude)
+            });
+            marker.addTo(radarLayer);
+            radarMarkers.set(f.icao24, marker);
+        } else {
+            marker.setLatLng([f.lat, f.lon]);
+            marker.setIcon(makePlaneIcon(f.heading, f.baroAltitude));
+        }
+
+        marker.bindTooltip(`
+            <b>${f.callsign || f.icao24}</b><br>
+            Alt : ${Math.round(f.baroAltitude || 0)} ft<br>
+            Vitesse : ${Math.round((f.velocity || 0) * 3.6)} km/h
+        `, { direction: "top" });
+    });
+
+    // Suppression des avions disparus
+    radarMarkers.forEach((marker, icao24) => {
+        if (!seen.has(icao24)) {
+            radarLayer.removeLayer(marker);
+            radarMarkers.delete(icao24);
+        }
+    });
+}
+
+// ------------------------------------------------------
+// Polling radar (toutes les 2 secondes)
+// ------------------------------------------------------
+export async function loadRadar() {
+    try {
+        const r = await fetch("/radar");
+        const json = await r.json();
+        renderRadar(json.flights || []);
+    } catch (e) {
+        console.error("[RADAR] erreur", e);
+    }
+}
