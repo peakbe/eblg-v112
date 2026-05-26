@@ -518,7 +518,7 @@ app.get("/api/adsb", async (req, res) => {
 // ======================================================
 // Backend radar — logique type - centre EBLG
 // ======================================================
-const EBLG = { lat: 50.637, lon: 5.443 };
+import { EBLG } from "./constants.js";
 const RADIUS_KM = 150;
 
 app.get("/radar", async (req, res) => {
