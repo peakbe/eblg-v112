@@ -12,7 +12,7 @@ import fetch from "node-fetch";
 // ======================================================
 // CONSTANTES GLOBALES (importées en premier !)
 // ======================================================
-import { EBLG } from "./constants.js";
+import { EBLG } from "./public/js/constants.js";
 
 // ======================================================
 // IMPORTS MODULES BACKEND
