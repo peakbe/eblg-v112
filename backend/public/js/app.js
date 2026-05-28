@@ -18,8 +18,8 @@ import { loadSonometers } from "./sonometers.js";
 import { checkApiStatus } from "./status.js";
 import { loadLogs } from "./logs.js";
 import { startLiveLogs } from "./logsLive.js";
-import { loadRadar } from "./radar.js";
-setInterval(loadRadar, 2000); // toutes les 2 secondes
+import { initRadar } from "./radar.js";
+setInterval(initRadar, 2000); // toutes les 2 secondes
 
 // ------------------------------------------------------
 // CHARGEMENT DES SONOMÈTRES UNIQUEMENT QUAND LA CARTE EST PRÊTE
@@ -75,7 +75,7 @@ function setupTimers() {
 });
     setInterval(checkApiStatus, 60_000);
     setInterval(loadLogs, 120_000);
-    setInterval(loadRadar, 2000); // toutes les 2 s
+    setInterval(initRadar, 2000); // toutes les 2 s
 }
 
 // ------------------------------------------------------
