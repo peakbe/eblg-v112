@@ -13,8 +13,15 @@ export async function safeLoadFids() {
     try {
         const data = await fetchJSON(ENDPOINTS.fids);
 
-        const arrivals   = Array.isArray(data?.arrivals)   ? data.arrivals   : [];
-        const departures = Array.isArray(data?.departures) ? data.departures : [];
+        // Limiter à 10 vols chacun
+const arrivals = Array.isArray(data?.arrivals)
+    ? data.arrivals.slice(0, 10)
+    : [];
+
+const departures = Array.isArray(data?.departures)
+    ? data.departures.slice(0, 10)
+    : [];
+
 
         renderFids(arrivals, departures);
         updateStatusPanel("FIDS", { ok: true });
