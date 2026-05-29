@@ -3,7 +3,7 @@
 // ======================================================
 
 // URL backend Render (sans slash final)
-export const BASE_URL = "https://eblg-dashboard-v155.onrender.com";
+export const BASE_URL = "https://eblg-dashboard-v84.onrender.com";
 
 // Endpoints backend
 export const ENDPOINTS = {
