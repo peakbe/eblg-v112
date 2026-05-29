@@ -99,3 +99,9 @@ function renderLiveLogs() {
 
     panel.scrollTop = 0;
 }
+
+// ------------------------------------------------------
+// EXPORT GLOBAL (clé pour app.js)
+// ------------------------------------------------------
+window.startLiveLogs = startLiveLogs;
+window.initLiveLogs = () => {};
