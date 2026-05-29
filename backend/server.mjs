@@ -138,7 +138,7 @@ app.get("/radar", async (req, res) => {
 // ROUTE SONOMETERS
 // ======================================================
 import sonoData from "./sonometers-data.js";
-app.get("/sonos", (req, res) => {
+app.get("/api/sonos", (req, res) => {
     res.json(sonoData);
 });
 
