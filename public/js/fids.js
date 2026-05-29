@@ -1,131 +1,82 @@
 // ======================================================
 // FIDS.JS — Cockpit IFR EBLG PRO+++
-// Compatible API officielle Liège Airport
+// Chargement Arrivées / Départs + rendu UI
 // ======================================================
 
 import { ENDPOINTS } from "./config.js";
 import { fetchJSON, updateStatusPanel } from "./helpers.js";
 
 // ------------------------------------------------------
-// API PUBLIC — appelée par app.js
+// Fonction principale appelée par app.js
 // ------------------------------------------------------
-export async function safeLoadFids() {
+async function loadFids() {
+    const arrEl = document.getElementById("fids-arrivals");
+    const depEl = document.getElementById("fids-departures");
+
     try {
         const data = await fetchJSON(ENDPOINTS.fids);
 
-        // Limiter à 10 vols chacun
-const arrivals = Array.isArray(data?.arrivals)
-    ? data.arrivals.slice(0, 10)
-    : [];
+        // Format attendu :
+        // { arrivals: [...], departures: [...] }
+        if (!data || !Array.isArray(data.arrivals) || !Array.isArray(data.departures)) {
+            console.warn("[FIDS] Format inattendu:", data);
+            renderFids([], arrEl);
+            renderFids([], depEl);
+            updateStatusPanel("FIDS", { error: true });
+            return;
+        }
 
-const departures = Array.isArray(data?.departures)
-    ? data.departures.slice(0, 10)
-    : [];
+        renderFids(data.arrivals, arrEl);
+        renderFids(data.departures, depEl);
 
-
-        renderFids(arrivals, departures);
         updateStatusPanel("FIDS", { ok: true });
 
     } catch (err) {
-        console.error("[FIDS] Erreur safeLoadFids", err);
+        console.error("[FIDS] Erreur loadFids()", err);
+        if (arrEl) arrEl.textContent = "Erreur FIDS";
+        if (depEl) depEl.textContent = "Erreur FIDS";
         updateStatusPanel("FIDS", { error: true });
     }
 }
 
 // ------------------------------------------------------
-// FORMAT HEURE
+// Rendu FIDS
 // ------------------------------------------------------
-function formatTime(dateStr) {
-    const d = new Date(dateStr);
-    return d.toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" });
-}
+function renderFids(list, container) {
+    if (!container) return;
 
-// ------------------------------------------------------
-// STATUTS ANIMÉS
-// ------------------------------------------------------
-function getFidsStatus(flight) {
-    const now = Date.now();
-    const sched = new Date(flight.date).getTime();
-    const etd   = flight.eTx ? new Date(flight.eTx).getTime() : null;
-    const atd   = flight.aTx ? new Date(flight.aTx).getTime() : null;
+    container.innerHTML = "";
 
-    // 1) LANDED (arrivals)
-    if (flight.direction === "Arrivals" && atd) {
-        return { label: "LANDED", css: "fids-status-landed" };
+    if (!Array.isArray(list) || list.length === 0) {
+        container.textContent = "Aucun vol";
+        return;
     }
 
-    // 2) BOARDING (departures)
-    if (flight.direction === "Departures" && etd && now > sched - 20*60000) {
-        return { label: "BOARDING", css: "fids-status-boarding" };
-    }
+    const table = document.createElement("table");
+    table.className = "fids-table";
 
-    // 3) DELAYED
-    if (etd && etd > sched + 5*60000) {
-        return { label: "DELAYED", css: "fids-status-delayed" };
-    }
+    const thead = document.createElement("thead");
+    thead.innerHTML = `
+        <tr>
+            <th>Heure</th>
+            <th>Vol</th>
+            <th>Origine/Destination</th>
+            <th>Statut</th>
+        </tr>
+    `;
+    table.appendChild(thead);
 
-    // 4) ON TIME
-    return { label: "ON TIME", css: "" };
-}
+    const tbody = document.createElement("tbody");
 
-// ------------------------------------------------------
-// RENDU PRINCIPAL FIDS
-// ------------------------------------------------------
-export function renderFids(arrivals, departures) {
-
-    const arrEl = document.getElementById("fids-arrivals");
-    const depEl = document.getElementById("fids-departures");
-
-    arrEl.innerHTML = "";
-    depEl.innerHTML = "";
-
-    const renderRow = (f, isArrival) => {
-        const st = getFidsStatus(f);
-
-        return `
-            <div class="fids-row-jepp">
-                <span class="fids-col flight">${f.flightNumber}</span>
-                <span class="fids-col city">${isArrival ? f.origin : f.destination}</span>
-                <span class="fids-col time">${formatTime(f.date)}</span>
-                <span class="fids-col stand">${f.stand || "-"}</span>
-                <span class="fids-col status ${st.css}">${st.label}</span>
-            </div>
+    list.forEach(f => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${f.time || ""}</td>
+            <td>${f.flight || ""}</td>
+            <td>${f.city || ""}</td>
+            <td>${f.status || ""}</td>
         `;
-    };
-
-    // ARRIVALS
-    arrivals
-        .sort((a,b) => new Date(a.date) - new Date(b.date))
-        .forEach(f => arrEl.innerHTML += renderRow(f, true));
-
-    // DEPARTURES
-    departures
-        .sort((a,b) => new Date(a.date) - new Date(b.date))
-        .forEach(f => depEl.innerHTML += renderRow(f, false));
-}
-
-// ------------------------------------------------------
-// TABS ARRIVALS / DEPARTURES
-// ------------------------------------------------------
-export function initFidsTabs() {
-    const tabs = document.querySelectorAll("[data-fids]");
-    const arr = document.getElementById("fids-arrivals");
-    const dep = document.getElementById("fids-departures");
-
-    tabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-            tabs.forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-
-            const mode = tab.getAttribute("data-fids");
-
-            if (mode === "arrivals") {
-                arr.style.display = "block";
-                dep.style.display = "none";
-            } else {
-                arr.style.display = "none";
-                dep.style.display = "block";
-            }
-        });
+        tbody.appendChild(tr);
     });
-}
+
+    table.appendChild
