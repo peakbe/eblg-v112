@@ -2,7 +2,6 @@
 // CONFIG.JS — Cockpit IFR EBLG PRO+++
 // ======================================================
 
-// Même domaine Render → pas besoin de base URL
 const API_BASE = "";
 
 // ------------------------------------------------------
@@ -12,7 +11,7 @@ export const ENDPOINTS = {
     metar:     `${API_BASE}/api/metar`,
     taf:       `${API_BASE}/api/taf`,
     fids:      `${API_BASE}/api/fids`,
-    sonos:     `${API_BASE}/api/sonos`,
+    sonos:     `${API_BASE}/api/sonos`,      // 🔥 clé indispensable
     radar:     `${API_BASE}/api/radar`,
     logs:      `${API_BASE}/api/logs`,
     logsLive:  `${API_BASE}/api/logs-live`
@@ -31,7 +30,7 @@ export const STATUS_CONFIG = {
 };
 
 // ------------------------------------------------------
-// EXPORT GLOBAL (clé pour helpers.js, radar.js, console…)
+// EXPORT GLOBAL
 // ------------------------------------------------------
 window.ENDPOINTS = ENDPOINTS;
 window.STATUS_CONFIG = STATUS_CONFIG;
