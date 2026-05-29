@@ -1,12 +1,20 @@
 services:
   - type: web
-    name: eblg-proxy
+    name: eblg-dashboard
     env: node
     region: frankfurt
     plan: free
+
+    # Racine du repo (pas backend !)
     rootDir: .
-    buildCommand: "npm install"
-    startCommand: "node server.mjs"
+
+    # Installer les dépendances dans /backend
+    buildCommand: "npm install --prefix backend"
+
+    # Lancer le serveur Express dans /backend
+    startCommand: "node backend/server.mjs"
+
     autoDeploy: true
+
     envVars:
       NODE_VERSION: 18
