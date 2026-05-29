@@ -1,110 +1,125 @@
 // ======================================================
-// RADAR.JS — Cockpit IFR PRO+++
+// RADAR.JS — Cockpit IFR EBLG PRO+++
+// Trajectoires ADS-B + polylines + décorateurs
 // ======================================================
 
-import { EBLG } from "./constants.js";
-
-// ======================================================
-// CONFIG
-// ======================================================
-const RADAR_URL = "/radar";
-const RADAR_REFRESH_MS = 5000;
+import { ENDPOINTS } from "./config.js";
+import { fetchJSON, updateStatusPanel } from "./helpers.js";
 
 let radarLayer = null;
 
-// ======================================================
-// OUTILS
-// ======================================================
-function isValidFlight(f) {
-    return (
-        f &&
-        typeof f.lat === "number" &&
-        typeof f.lon === "number" &&
-        !Number.isNaN(f.lat) &&
-        !Number.isNaN(f.lon)
-    );
-}
-
-function createMarker(f) {
-    return L.circleMarker([f.lat, f.lon], {
-        radius: 5,
-        color: "#00e5ff",
-        weight: 1,
-        fillColor: "#00e5ff",
-        fillOpacity: 0.8
-    }).bindTooltip(
-        `${f.callsign || "N/A"}<br>${f.alt || 0} ft<br>${f.speed || 0} kt`,
-        { direction: "top" }
-    );
-}
-
-// ======================================================
-// CHARGEMENT RADAR
-// ======================================================
+// ------------------------------------------------------
+// Fonction principale appelée par app.js
+// ------------------------------------------------------
 async function loadRadar() {
     try {
-        const r = await fetch(RADAR_URL, { cache: "no-store" });
+        ensureMapReady();
 
-        // Si backend renvoie HTML → éviter crash JSON
-        const text = await r.text();
-        if (text.trim().startsWith("<")) {
-            console.warn("[RADAR] HTML reçu → backend fallback SPA");
-            return [];
+        const data = await fetchJSON(ENDPOINTS.radar);
+
+        // Format attendu (souple) :
+        // [ { icao, callsign, points: [ { lat, lon, alt, ts }, ... ] }, ... ]
+        if (!Array.isArray(data)) {
+            console.warn("[RADAR] Format inattendu:", data);
+            clearRadarLayer();
+            updateStatusPanel("ADSB", { error: true });
+            return;
         }
 
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            console.warn("[RADAR] JSON invalide →", e);
-            return [];
-        }
-
-        if (!data || !Array.isArray(data.flights)) {
-            console.warn("[RADAR] format invalide");
-            return [];
-        }
-
-        return data.flights.filter(isValidFlight);
+        renderRadar(data);
+        updateStatusPanel("ADSB", { ok: true });
 
     } catch (err) {
-        console.error("[RADAR] erreur réseau", err);
-        return [];
+        console.error("[RADAR] Erreur loadRadar()", err);
+        updateStatusPanel("ADSB", { error: true });
     }
 }
 
-// ======================================================
-// AFFICHAGE RADAR
-// ======================================================
-async function updateRadar() {
-    const flights = await loadRadar();
-
+// ------------------------------------------------------
+// Vérifie que la carte existe
+// ------------------------------------------------------
+function ensureMapReady() {
+    if (!window.map) {
+        console.warn("[RADAR] map inexistante, initMap() devrait déjà avoir été appelé par app.js");
+        return;
+    }
     if (!radarLayer) {
         radarLayer = L.layerGroup().addTo(window.map);
     }
+}
 
-    radarLayer.clearLayers();
-
-    if (!flights.length) {
-        console.warn("[RADAR] aucun trafic valide");
-        return;
+// ------------------------------------------------------
+// Nettoyage couche radar
+// ------------------------------------------------------
+function clearRadarLayer() {
+    if (radarLayer) {
+        radarLayer.clearLayers();
     }
+}
 
-    flights.forEach(f => {
-        const marker = createMarker(f);
-        radarLayer.addLayer(marker);
+// ------------------------------------------------------
+// Rendu radar
+// ------------------------------------------------------
+function renderRadar(tracks) {
+    if (!window.map) return;
+
+    ensureMapReady();
+    clearRadarLayer();
+
+    tracks.forEach(track => {
+        if (!Array.isArray(track.points) || track.points.length < 2) return;
+
+        const latlngs = track.points
+            .filter(p => typeof p.lat === "number" && typeof p.lon === "number")
+            .map(p => [p.lat, p.lon]);
+
+        if (latlngs.length < 2) return;
+
+        // Polyline principale
+        const poly = L.polyline(latlngs, {
+            color: "yellow",
+            weight: 2,
+            opacity: 0.8
+        }).addTo(radarLayer);
+
+        // Dernier point = position actuelle
+        const last = latlngs[latlngs.length - 1];
+        const marker = L.circleMarker(last, {
+            radius: 4,
+            color: "#ff8800",
+            weight: 1,
+            fillColor: "#ffcc00",
+            fillOpacity: 0.9
+        }).addTo(radarLayer);
+
+        if (track.callsign || track.icao) {
+            marker.bindTooltip(
+                `${track.callsign || ""} ${track.icao || ""}`.trim(),
+                { permanent: false, direction: "top", offset: [0, -4] }
+            );
+        }
+
+        // Décorateur de direction (si plugin chargé)
+        if (L.polylineDecorator) {
+            L.polylineDecorator(poly, {
+                patterns: [
+                    {
+                        offset: "10%",
+                        repeat: "20%",
+                        symbol: L.Symbol.arrowHead({
+                            pixelSize: 6,
+                            polygon: false,
+                            pathOptions: { stroke: true, color: "yellow", weight: 1 }
+                        })
+                    }
+                ]
+            }).addTo(radarLayer);
+        }
     });
 }
 
-// ======================================================
-// INITIALISATION
-// ======================================================
-export function initRadar() {
-    if (!window.map) {
-        console.error("[RADAR] map non initialisée");
-        return;
-    }
-
-    updateRadar();
-    setInterval(updateRadar, RADAR_REFRESH_MS);
-}
+// ------------------------------------------------------
+// EXPORT GLOBAL (clé pour app.js)
+// ------------------------------------------------------
+window.loadRadar = loadRadar;
+window.initRadar = () => {};
