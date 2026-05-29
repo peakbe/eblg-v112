@@ -1,82 +1,59 @@
 // ======================================================
 // HELPERS.JS — Cockpit IFR EBLG PRO+++
-// - fetchJSON blindé (anti-HTML, anti-JSON invalide)
-// - timeout intégré
-// - updateStatusPanel harmonisé
+// Fetch JSON + statut panneau
 // ======================================================
 
-// ------------------------------------------------------
-// FETCH JSON ROBUSTE — ANTI-HTML — TIMEOUT — PRO+++
-// ------------------------------------------------------
-export async function fetchJSON(url, timeoutMs = 8000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+import { STATUS_CONFIG } from "./config.js";
 
+const IS_DEV = location.hostname.includes("localhost");
+const log = (...a) => IS_DEV && console.log("[HELPERS]", ...a);
+const logErr = (...a) => console.error("[HELPERS ERROR]", ...a);
+
+// ------------------------------------------------------
+// FETCH JSON ROBUSTE
+// ------------------------------------------------------
+export async function fetchJSON(url, options = {}) {
     try {
-        const r = await fetch(url, { signal: controller.signal });
+        const res = await fetch(url, {
+            cache: "no-store",
+            ...options
+        });
 
-        if (!r.ok) {
-            console.warn("[fetchJSON] HTTP", r.status, url);
-            return null;
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
         }
 
-        const text = await r.text();
-
-        // 🔥 Anti-HTML : si la réponse commence par "<", on ignore
-        if (text.trim().startsWith("<")) {
-            console.warn("[fetchJSON] Réponse HTML ignorée", url);
-            return null;
+        const ct = res.headers.get("content-type") || "";
+        if (!ct.includes("application/json")) {
+            logErr("Réponse non JSON pour", url, "→", ct);
+            throw new Error("Réponse non JSON");
         }
 
-        // Tentative de parse JSON
-        try {
-            return JSON.parse(text);
-        } catch (err) {
-            console.warn("[fetchJSON] JSON invalide", url);
-            return null;
-        }
-
+        return await res.json();
     } catch (err) {
-        if (err.name === "AbortError") {
-            console.warn("[fetchJSON] Timeout", url);
-        } else {
-            console.error("[fetchJSON] Erreur", err);
-        }
-        return null;
-
-    } finally {
-        clearTimeout(timer);
+        logErr("fetchJSON erreur pour", url, err);
+        throw err;
     }
 }
 
 // ------------------------------------------------------
-// UPDATE STATUS PANEL — PRO+++
+// MISE À JOUR DU PANNEAU DE STATUT
 // ------------------------------------------------------
 export function updateStatusPanel(key, state) {
-    const el = document.querySelector(`[data-status="${key}"]`);
+    const cfg = STATUS_CONFIG?.[key] || {};
+    const el = document.querySelector(`[data-status-key="${key}"]`);
     if (!el) return;
 
-    el.classList.remove("ok", "error");
+    el.classList.remove("status-ok", "status-error", "status-warn");
 
-    if (state.ok) el.classList.add("ok");
-    if (state.error) el.classList.add("error");
-}
-
-// ------------------------------------------------------
-// HAVERSINE — DISTANCE (mètres)
-// ------------------------------------------------------
-export function haversine(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const toRad = x => (x * Math.PI) / 180;
-
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-
-    const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) *
-            Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) ** 2;
-
-    return 2 * R * Math.asin(Math.sqrt(a));
+    if (state.ok) {
+        el.classList.add("status-ok");
+        el.textContent = cfg.labelOk || `${key}: OK`;
+    } else if (state.warn) {
+        el.classList.add("status-warn");
+        el.textContent = cfg.labelWarn || `${key}: WARN`;
+    } else if (state.error) {
+        el.classList.add("status-error");
+        el.textContent = cfg.labelError || `${key}: ERR`;
+    }
 }
