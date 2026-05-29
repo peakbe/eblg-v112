@@ -10,14 +10,14 @@ import {
     initNoiseZones
 } from "./map.js";
 
-import { initMetar, safeLoadMetar } from "./metar.js";
-import { initTaf, safeLoadTaf } from "./taf.js";
-import { safeLoadFids, initFidsTabs } from "./fids.js";
-import { loadSonometers } from "./sonometers.js";
-import { checkApiStatus } from "./status.js";
-import { loadLogs } from "./logs.js";
-import { startLiveLogs } from "./logsLive.js";
-import { initRadar } from "./radar.js";
+import { initMetar, safeLoadMetar } from "./metar.js?v=155";
+import { initTaf, safeLoadTaf } from "./taf.js?v=155";
+import { safeLoadFids, initFidsTabs } from "./fids.js?v=155";
+import { loadSonometers } from "./sonometers.js?v=155";
+import { checkApiStatus } from "./status.j?v=155s";
+import { loadLogs } from "./logs.js?v=155";
+import { startLiveLogs } from "./logsLive.js?v=155";
+import { initRadar } from "./radar.js?v=155";
 
 // ======================================================
 // CHARGEMENT DES SONOMÈTRES UNIQUEMENT QUAND LA CARTE EST PRÊTE
