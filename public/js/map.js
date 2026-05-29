@@ -3,8 +3,6 @@
 // Carte Leaflet + couches IFR + signal "map-ready"
 // ======================================================
 
-import { loadSonometers } from "./sonometers.js";
-
 export let map = null;
 
 let adsbLayer = null;
@@ -47,12 +45,11 @@ export function initMap() {
     // --------------------------------------------------
     // SIGNAL GLOBAL : CARTE PRÊTE
     // --------------------------------------------------
-    // On expose la carte globalement (clé pour radar.js)
-    window.map = map;
+    window.map = map;          // 🔥 indispensable
+    window._map = map;         // compatibilité ancienne version
 
-    // On laisse le temps à app.js d’installer ses listeners
     setTimeout(() => {
-        map.invalidateSize(); // indispensable
+        map.invalidateSize();  // indispensable
         window.dispatchEvent(new Event("map-ready"));
     }, 0);
 }
@@ -66,14 +63,13 @@ export function resetMapView() {
 }
 
 // ------------------------------------------------------
-// DESSIN DES PISTES (simple, robuste)
+// DESSIN DES PISTES
 // ------------------------------------------------------
 function drawRunways() {
     if (!runwayLayer) return;
 
     runwayLayer.clearLayers();
 
-    // RWY 04/22 EBLG
     const rwy04 = [
         [50.64455, 5.44305],
         [50.65035, 5.46315]
@@ -97,4 +93,4 @@ function drawRunways() {
 // ------------------------------------------------------
 // EXPORT GLOBAL (clé pour app.js)
 // ------------------------------------------------------
-window.initMap = initMap;
+window.initMap = initMap;   // 🔥🔥🔥 indispensable
