@@ -6,17 +6,18 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-    <link rel="stylesheet" href="/css/style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <link rel="icon" href="data:,">
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
 
+    <!-- Style -->
+    <link rel="stylesheet" href="/css/style.css?v=155" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="icon" href="data:,">
 </head>
-    
+
 <body>
     <!-- SIDEBAR -->
     <div id="sidebar">
@@ -53,10 +54,11 @@
                 <div id="fids-arrivals"></div>
                 <div id="fids-departures"></div>
             </div>
+
             <div id="fids-tabs">
-    <button data-fids="arrivals" class="fids-tab active">Arrivées</button>
-    <button data-fids="departures" class="fids-tab">Départs</button>
-</div>
+                <button data-fids="arrivals" class="fids-tab active">Arrivées</button>
+                <button data-fids="departures" class="fids-tab">Départs</button>
+            </div>
 
             <!-- SONOMÈTRES -->
             <div id="panel-sono" class="panel hidden">
@@ -73,8 +75,8 @@
             </div>
 
             <div id="acoustic-analysis">
-    <canvas id="db-histogram"></canvas>
-</div>
+                <canvas id="db-histogram"></canvas>
+            </div>
 
             <!-- LOGS -->
             <div id="panel-logs" class="panel hidden">
@@ -116,33 +118,35 @@
         Render: <span id="render">--</span> ms
     </div>
 
-    <!-- SCRIPTS -->
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-    </script>
-    <script
-        <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.1.0/dist/leaflet.polylineDecorator.min.js"></script>
-    
-    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <!-- Leaflet core -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <!-- PolylineDecorator (CDN fiable) -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.1.0/dist/leaflet.polylineDecorator.min.js"></script>
+
+    <!-- Heatmap -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat/dist/leaflet-heat.js"></script>
+
+    <!-- APP (modules versionnés) -->
     <script type="module" src="/js/app.js?v=155"></script>
 
+    <!-- dB Panel -->
     <div id="db-panel" class="db-panel hidden">
-    <div class="db-header">
-        <span>Niveaux sonores (dB)</span>
-        <span id="db-close">✕</span>
+        <div class="db-header">
+            <span>Niveaux sonores (dB)</span>
+            <span id="db-close">✕</span>
+        </div>
+
+        <div class="db-meta">
+            <div>Piste active : <strong id="db-runway"></strong></div>
+            <div>Vent : <strong id="db-wind"></strong></div>
+            <div>Trafic : <strong id="db-traffic"></strong></div>
+        </div>
+
+        <div id="db-list" class="db-list"></div>
     </div>
 
-    <div class="db-meta">
-        <div>Piste active : <strong id="db-runway"></strong></div>
-        <div>Vent : <strong id="db-wind"></strong></div>
-        <div>Trafic : <strong id="db-traffic"></strong></div>
-    </div>
-
-    <div id="db-list" class="db-list"></div>
-</div>
-
-<button id="db-toggle" class="db-toggle">dB</button>
+    <button id="db-toggle" class="db-toggle">dB</button>
 
 </body>
 </html>
